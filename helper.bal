@@ -5,12 +5,11 @@ import ballerina/time;
 isolated function serialize(map<anydata> queryParam) returns string {
     // Source: array("A" => "Red", "B" => "Green", "C" => "Blue") 
     // Target: a:3:{s:1:"A";s:3:"Red";s:1:"B";s:5:"Green";s:1:"C";s:4:"Blue";}
-    string serializedString = "";
-    foreach var key in queryParam.keys() {
-        serializedString = serializedString + "s:" + key.length().toString() + ":\"" + key + "\";";
-        serializedString = serializedString + serializeValue(queryParam[key]);
-    }
-    return "a:" + queryParam.length().toString() + ":{" + serializedString + "}";
+    return "a:" + queryParam.length().toString() + ":{" +
+    queryParam.entries().reduce(isolated function(string s, [string, anydata] current) returns string =>
+        serializeValue(current[0]) + serializeValue(current[1])
+    , "") +
+    "}";
 }
 
 isolated function serializeValue(anydata value) returns string {
@@ -25,11 +24,11 @@ isolated function serializeValue(anydata value) returns string {
     } else if (value is map<anydata>) {
         return serialize(value);
     } else {
-        panic error("Not implemented");
+        panic error("not implemented");
     }
 }
 
-isolated function encrypt(string call_id, string crypt_key, map<anydata> queryParams, string iv = "31bfe7df6c8e3abe") returns string|error {
+isolated function encrypt(string call_id, string crypt_key, map<anydata> queryParams, string iv = "31bfe7df6c8e3abe") returns string|url:Error|crypto:Error {
     queryParams["call_id"] = call_id;
     queryParams["time"] = time:utcNow(3)[0];
     var hash = crypto:hashSha256(crypt_key.toBytes()).toBase16().substring(0, 32);
