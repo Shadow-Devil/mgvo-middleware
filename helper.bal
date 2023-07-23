@@ -1,9 +1,10 @@
 import ballerina/crypto;
 import ballerina/url;
+import ballerina/time;
 
 isolated function serialize(map<anydata> queryParam) returns string {
-// Source: array("A" => "Red", "B" => "Green", "C" => "Blue") 
-// Target: a:3:{s:1:"A";s:3:"Red";s:1:"B";s:5:"Green";s:1:"C";s:4:"Blue";}
+    // Source: array("A" => "Red", "B" => "Green", "C" => "Blue") 
+    // Target: a:3:{s:1:"A";s:3:"Red";s:1:"B";s:5:"Green";s:1:"C";s:4:"Blue";}
     string serializedString = "";
     foreach var key in queryParam.keys() {
         serializedString = serializedString + "s:" + key.length().toString() + ":\"" + key + "\";";
@@ -28,9 +29,11 @@ isolated function serializeValue(anydata value) returns string {
     }
 }
 
-public function encrypt(string crypt_key, map<anydata> queryParams, string iv = "31bfe7df6c8e3abe") returns string|error {
+isolated function encrypt(string call_id, string crypt_key, map<anydata> queryParams, string iv = "31bfe7df6c8e3abe") returns string|error {
+    queryParams["call_id"] = call_id;
+    queryParams["time"] = time:utcNow(3)[0];
     var hash = crypto:hashSha256(crypt_key.toBytes()).toBase16().substring(0, 32);
-    var input = serialize(queryParams);    
+    var input = serialize(queryParams);
     var cipherText = check crypto:encryptAesCbc(input.toBytes(), hash.toBytes(), iv.toBytes());
     return url:encode((iv + cipherText.toBase64()).toBytes().toBase64(), "UTF-8");
 }

@@ -1,6 +1,6 @@
 [package]
 org = "f_schnabel"
-name = "greeter"
+name = "mgvo_middleware"
 version = "0.1.0"
 distribution = "2201.7.0"
 

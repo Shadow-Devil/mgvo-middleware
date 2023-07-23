@@ -294,7 +294,7 @@ modules = [
 
 [[package]]
 org = "f_schnabel"
-name = "greeter"
+name = "mgvo_middleware"
 version = "0.1.0"
 dependencies = [
 	{org = "ballerina", name = "crypto"},
@@ -305,6 +305,6 @@ dependencies = [
 	{org = "ballerinai", name = "observe"}
 ]
 modules = [
-	{org = "f_schnabel", packageName = "greeter", moduleName = "greeter"}
+	{org = "f_schnabel", packageName = "mgvo_middleware", moduleName = "mgvo_middleware"}
 ]
 
