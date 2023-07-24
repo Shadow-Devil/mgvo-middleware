@@ -2,27 +2,22 @@ import ballerina/crypto;
 import ballerina/url;
 import ballerina/time;
 
-isolated function serialize(map<anydata> queryParam) returns string {
+isolated function serialize(anydata value) returns string {
     // Source: array("A" => "Red", "B" => "Green", "C" => "Blue") 
     // Target: a:3:{s:1:"A";s:3:"Red";s:1:"B";s:5:"Green";s:1:"C";s:4:"Blue";}
-    return "a:" + queryParam.length().toString() + ":{" +
-    queryParam.entries().reduce(isolated function(string s, [string, anydata] current) returns string =>
-        serializeValue(current[0]) + serializeValue(current[1])
-    , "") +
-    "}";
-}
-
-isolated function serializeValue(anydata value) returns string {
     if (value is string) {
-        return "s:" + value.length().toString() + ":\"" + value + "\";";
+        return string `s:${value.length()}:"${value}";`;
     } else if (value is int) {
-        return "i:" + value.toString() + ";";
+        return string `i:${value};`;
     } else if (value is float) {
-        return "d:" + value.toString() + ";";
+        return string `d:${value};`;
     } else if (value is boolean) {
-        return "b:" + value.toString() + ";";
+        return string `b:${value};`;
     } else if (value is map<anydata>) {
-        return serialize(value);
+        final string entries = value.entries().reduce(isolated function(string s, [string, anydata] current) returns string =>
+            s + serialize(current[0]) + serialize(current[1])
+        , "");
+        return string `a:${value.length()}:{${entries}}`;
     } else {
         panic error("not implemented");
     }
