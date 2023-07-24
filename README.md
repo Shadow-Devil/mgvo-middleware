@@ -5,4 +5,4 @@ The middleware forwards the requests to the MGVO API (https://www.mgvo.de/api) a
 It hides away the complexity of the MGVO API and provides a simple REST API.  
 The middleware is written in [Ballerina](https://ballerina.io/).
 
-You can find the the API Documentation here: https://devportal.choreo.dev/boogiebaeren/apis/64bee2a97f18260ffae8af5e/overview
+You can find the the API Documentation here: https://devportal.choreo.dev/boogiebaeren/
