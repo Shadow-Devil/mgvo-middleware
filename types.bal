@@ -1,4 +1,3 @@
-
 enum RequestType {
     GET_TRAINERS = "1",
     GET_LOCATIONS = "2",
@@ -26,11 +25,11 @@ enum OutputMode {
 type MgvoResponse record {|
     string rootname;
     string objname;
-    string headline;
+    string? headline;
     string call_id;
     string version;
     string verein;
-    string objfieldlist;
-    map<json>[]...;
+    string objfieldlist?;
+    json...;
 |};
 
