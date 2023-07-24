@@ -7,6 +7,7 @@ import ballerina/url;
 
 type MgvoMiddlewareResponse MgvoResponse|http:Unauthorized|error;
 
+// TODO: change up once 7.1 is released (https://github.com/ballerina-platform/openapi-tools/releases)
 //httpscerr:UnauthorizedError|
 //httpscerr:NotImplementedError|
 //http:ClientError;
@@ -17,7 +18,7 @@ type MgvoMiddlewareResponse MgvoResponse|http:Unauthorized|error;
 }
 type DunningLevel int;
 
-var Gender = {
+const Gender = {
     "factual": "x",
     "male": "m",
     "female": "w"
@@ -55,7 +56,7 @@ service / on new http:Listener(8080) {
         return self.getMgvo(GET_EVENTS, call\-id);
     }
 
-    resource function get members(
+    isolated resource function get members(
             @http:Header string call\-id,
             @http:Header string crypt\-key,
             string? search,
@@ -89,7 +90,7 @@ service / on new http:Listener(8080) {
         // - Mail recipient (Mailempfänger): mailempf (x,e,s)
         // - Domestic/Foreign (Inland/Ausland): landsel (x,i,a)
         // - Dunning level (Mahnstufe): selmahnstufe (a,1,2,3)
-        return self.encryptedGetMgvo(GET_MEMBERS, call\-id, crypt\-key, {
+        map<anydata> params = {
             suchbeg: search,
             suchalterv: birthdateFrom,
             suchalterb: birthdateTo,
@@ -100,13 +101,15 @@ service / on new http:Listener(8080) {
             lssel: directDebitPayer == true ? "1" : null,
             barsel: cashPayer == true ? "1" : null,
             dasel: standingOrder == true ? "1" : null,
-            geschl: Gender[gender ?: ""],
+            geschl: gender is null ? null : Gender[gender],
             ausgetr: member,
             aktpass: active,
             mailempf: mailRecipient,
             landsel: domestic,
             selmahnstufe: dunningLevel is null ? null : dunningLevel == 0 ? "a" : dunningLevel.toString()
-        }.filter(v => v !is null));
+        };
+
+        return self.encryptedGetMgvo(GET_MEMBERS, call\-id, crypt\-key, params.filter(v => v !is null));
     }
 
     resource function get members/[int id](@http:Header string call\-id, @http:Header string crypt\-key) returns MgvoMiddlewareResponse|error {
@@ -115,10 +118,12 @@ service / on new http:Listener(8080) {
         });
     }
 
-    resource function get members/[int id]/picture(@http:Header string call\-id, @http:Header string crypt\-key) returns MgvoMiddlewareResponse|error {
-        return self.encryptedGetMgvo(GET_MEMBERPIC, call\-id, crypt\-key, {
-            mgnr: id
-        });
+    resource function get members/[int id]/picture(@http:Header string call\-id, @http:Header string crypt\-key) returns http:NotImplemented {
+        return http:NOT_IMPLEMENTED;
+        // TODO doesn't work also in the original php api
+        //return self.encryptedGetMgvo(GET_MEMBERPIC, call\-id, crypt\-key, {
+        //    mgnr: id
+        //});
     }
 
     resource function get documents(@http:Header string call\-id) returns MgvoMiddlewareResponse {
@@ -188,7 +193,7 @@ service / on new http:Listener(8080) {
             reqtype = requestType,
             outmode = Json,
             paras = encrypted,
-            version = 3
+            version = 3.0
         );
         io:println(result.getTextPayload());
         io:println(result.statusCode.toString());
@@ -204,7 +209,13 @@ service / on new http:Listener(8080) {
             if payload.includes("Nicht erlaubt!") {
                 return http:UNAUTHORIZED;
             }
-            panic error(payload);
+            if payload.includes("ERROR 5: Sicherheitsfehler") {
+                return http:UNAUTHORIZED;
+            }
+            if payload.includes("ERROR 8: Anwendungsfehler") {
+                return error(payload);
+            }
+            return error(payload);
         }
 
         if (result.statusCode != 200) {
