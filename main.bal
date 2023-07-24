@@ -221,6 +221,6 @@ service / on new http:Listener(8080) {
         if (result.statusCode != 200) {
             panic error(string `${result.statusCode}, ${check result.getTextPayload()}`);
         }
-        return <MgvoResponse>check result.getJsonPayload().cloneReadOnly();
+        return check result.getJsonPayload().cloneReadOnly().ensureType(MgvoResponse);
     }
 }
