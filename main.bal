@@ -29,7 +29,7 @@ service / on new http:Listener(8080) {
     private final http:Client mgvoClient;
 
     function init() returns error? {
-        self.mgvoClient = check new ("https://www.mgvo.de/api");
+        self.mgvoClient = check new ("https://www.mgvo.de/api/api_entry.php");
     }
 
     resource function get trainers(@http:Header string call\-id) returns MgvoMiddlewareResponse {
@@ -93,7 +93,7 @@ service / on new http:Listener(8080) {
             string? mailRecipient,
             string? domestic,
             DunningLevel? dunningLevel
-    ) returns MgvoMiddlewareResponse|error {
+    ) returns MgvoMiddlewareResponse|error|Member[] {
         map<anydata> params = {
             suchbeg: search,
             suchalterv: birthdateFrom,
@@ -113,7 +113,12 @@ service / on new http:Listener(8080) {
             selmahnstufe: dunningLevel is null ? null : dunningLevel == 0 ? "a" : dunningLevel.toString()
         };
 
-        return self.forward(GET_MEMBERS, call\-id, crypt\-key, params.filter(v => v !is null));
+        var result = check self.forward(GET_MEMBERS, call\-id, crypt\-key, params.filter(v => v !is null));
+        if result is MgvoResponse {
+            Member[] r = check result[result.objname].ensureType();
+            return r;
+        }
+        return result;
     }
 
     resource function get members/[int id](@http:Header string call\-id, @http:Header string crypt\-key) returns MgvoMiddlewareResponse|error {
@@ -146,9 +151,10 @@ service / on new http:Listener(8080) {
         return self.forward(GET_CONTRIBUTIONGROUPS, call\-id);
     }
 
-    resource function post members(@http:Payload json payload) returns http:NotImplemented { //httpscerr:NotImplementedError {
-        //return error httpscerr:NotImplementedError("Not implemented");
-        return http:NOT_IMPLEMENTED;
+    resource function post members(@http:Header string call\-id, @http:Header string crypt\-key, @http:Payload Member payload) returns MgvoMiddlewareResponse {
+        return self.forward(POST_MEMBERS, call\-id, crypt\-key, {
+            inar: payload
+        });
     }
 
     resource function get calendars(@http:Header string call\-id) returns MgvoMiddlewareResponse {
@@ -160,14 +166,14 @@ service / on new http:Listener(8080) {
     }
 
     isolated function forward(
-        RequestType requestType, 
-        string call\-id, 
-        string? crypt\-key = null, 
-        map<anydata>? queryParams = null
+            RequestType requestType,
+            string call\-id,
+            string? crypt\-key = null,
+            map<anydata>? queryParams = null
     ) returns MgvoMiddlewareResponse|url:Error|crypto:Error {
         final http:Response result;
         if queryParams is null || crypt\-key is null {
-            result = check self.mgvoClient->/api_entry\.php(
+            result = check self.mgvoClient->/(
                 call_id = call\-id,
                 reqtype = requestType,
                 outmode = Json,
@@ -175,7 +181,7 @@ service / on new http:Listener(8080) {
             );
         } else {
             var encrypted = check encrypt(call\-id, crypt\-key, queryParams);
-            result = check self.mgvoClient->/api_entry\.php(
+            result = check self.mgvoClient->/(
                 call_id = call\-id,
                 reqtype = requestType,
                 outmode = Json,
