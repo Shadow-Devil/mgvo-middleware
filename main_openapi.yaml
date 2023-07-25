@@ -120,6 +120,7 @@ paths:
                 $ref: '#/components/schemas/MgvoMiddlewareResponse'
   /members:
     get:
+      summary: Get all members
       operationId: getMembers
       parameters:
       - name: call-id
@@ -134,56 +135,67 @@ paths:
           type: string
       - name: search
         in: query
+        description: General search term
         schema:
           type: string
           nullable: true
       - name: birthdateFrom
         in: query
+        description: Age/Date of birth from
         schema:
           type: string
           nullable: true
       - name: birthdateTo
         in: query
+        description: Age/Date of birth to
         schema:
           type: string
           nullable: true
       - name: resignationFrom
         in: query
+        description: Resignation (Austritt) from
         schema:
           type: string
           nullable: true
       - name: resignationTo
         in: query
+        description: Resignation (Austritt) to
         schema:
           type: string
           nullable: true
       - name: groupId
         in: query
+        description: Group ID
         schema:
           type: string
           nullable: true
       - name: priceGroup
         in: query
+        description: Contribution group (Beitragsgruppe)
         schema:
           type: string
           nullable: true
       - name: directDebitPayer
         in: query
+        description: Direct debit payer (Lastschriftzahler)
         schema:
           type: boolean
           nullable: true
       - name: cashPayer
         in: query
+        description: Cash payer/Transfer (Barzahler/Überweiser)
         schema:
           type: boolean
           nullable: true
       - name: standingOrder
         in: query
+        description: Standing order (Dauerauftrag)
         schema:
           type: boolean
           nullable: true
       - name: gender
         in: query
+        description: Gender
         content:
           application/json:
             schema:
@@ -191,26 +203,31 @@ paths:
               additionalProperties: true
       - name: member
         in: query
+        description: Member (Ausgetreten/Member)
         schema:
           type: string
           nullable: true
       - name: active
         in: query
+        description: Active/Passive
         schema:
           type: string
           nullable: true
       - name: mailRecipient
         in: query
+        description: Mail recipient (Mailempfänger)
         schema:
           type: string
           nullable: true
       - name: domestic
         in: query
+        description: Domestic/Foreign (Inland/Ausland)
         schema:
           type: string
           nullable: true
       - name: dunningLevel
         in: query
+        description: Dunning level (Mahnstufe)
         schema:
           nullable: true
       responses:

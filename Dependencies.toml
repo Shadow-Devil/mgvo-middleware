@@ -287,18 +287,6 @@ modules = [
 ]
 
 [[package]]
-org = "ballerinai"
-name = "observe"
-version = "0.0.0"
-dependencies = [
-	{org = "ballerina", name = "jballerina.java"},
-	{org = "ballerina", name = "observe"}
-]
-modules = [
-	{org = "ballerinai", packageName = "observe", moduleName = "observe"}
-]
-
-[[package]]
 org = "f_schnabel"
 name = "mgvo_middleware"
 version = "0.1.0"
@@ -309,8 +297,7 @@ dependencies = [
 	{org = "ballerina", name = "io"},
 	{org = "ballerina", name = "mime"},
 	{org = "ballerina", name = "time"},
-	{org = "ballerina", name = "url"},
-	{org = "ballerinai", name = "observe"}
+	{org = "ballerina", name = "url"}
 ]
 modules = [
 	{org = "f_schnabel", packageName = "mgvo_middleware", moduleName = "mgvo_middleware"}
