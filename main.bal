@@ -1,6 +1,5 @@
 import ballerina/http;
 import ballerina/mime;
-import ballerina/io;
 import ballerina/crypto;
 import ballerina/constraint;
 import ballerina/url;
@@ -24,7 +23,13 @@ const Gender = {
     "female": "w"
 };
 
-service / on new http:Listener(8080) {
+service / on new http:Listener(8080,     
+    secureSocket = {
+        key: {
+            certFile: "../certificates/selfsigned.crt",
+            keyFile: "../certificates/selfsigned.key"
+        }
+    }) {
 
     private final http:Client mgvoClient;
 
@@ -115,7 +120,7 @@ service / on new http:Listener(8080) {
 
         var result = check self.forward(GET_MEMBERS, call\-id, crypt\-key, params.filter(v => v !is null));
         if result is MgvoResponse {
-            Member[] r = check result[result.objname].ensureType();
+            Member[] r = check result[result.objname].cloneWithType();
             return r;
         }
         return result;
@@ -190,10 +195,10 @@ service / on new http:Listener(8080) {
             );
         }
 
-        io:println(result.getTextPayload());
-        io:println(result.statusCode.toString());
+        //io:println(result.getTextPayload());
+        //io:println(result.statusCode.toString());
         var mimetype = mime:getMediaType(result.getContentType());
-        io:println(mimetype);
+        //io:println(mimetype);
 
         if mimetype is mime:MediaType && mimetype.getBaseType() == "text/html" {
             var payload = check result.getTextPayload();
@@ -213,6 +218,6 @@ service / on new http:Listener(8080) {
         if (result.statusCode != 200) {
             panic error(string `${result.statusCode}, ${check result.getTextPayload()}`);
         }
-        return check result.getJsonPayload().cloneReadOnly().ensureType(MgvoResponse);
+        return (check result.getJsonPayload()).cloneWithType(MgvoResponse);
     }
 }
