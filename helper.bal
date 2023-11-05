@@ -17,7 +17,7 @@ isolated function serialize(anydata value) returns string {
         final string entries = value.entries().reduce(isolated function(string s, [string, anydata] current) returns string =>
             s + serialize(current[0]) + serialize(current[1])
         , "");
-        return string `a:${entries.length()}:{${entries}}`;
+        return string `a:${value.entries().length()}:{${entries}}`;
     } else {
         panic error("not implemented");
     }
