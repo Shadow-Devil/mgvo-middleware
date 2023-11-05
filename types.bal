@@ -44,8 +44,8 @@ type Member record {|
     string vorname?;
     string nachname;
 
-    "l"|"b"|"d" zahlungsart; //Lastschrift|Bar|Dauerauftrag
-    "j"|"h"|"v"|"m" zahlweise; //Jährlich|Halbjährlich|Vierteljährlich|Monatlich
+    "l"|"b"|"d" zahlungsart?; //Lastschrift|Bar|Dauerauftrag
+    "j"|"h"|"v"|"m" zahlweise?; //Jährlich|Halbjährlich|Vierteljährlich|Monatlich
     string zahlung_ab?; // TODO Date
     string maxabbuch?; // TODO Float
     string mgnr_fam?; // TODO Integer (Familienzahler)
@@ -74,6 +74,7 @@ type Member record {|
     string mobil2?;
     string email?;
     string nl_cons?; // TODO Boolean (Newsletter)
+    string fax?;
 
     string vbnr?; // Verbandsnummer
     string vbeintritt?; // TODO Date
@@ -114,16 +115,33 @@ type Member record {|
     string mgbzugangdat?; // TODO Date
     string lastupd?; // TODO Datetime
 
-    string idxtel1?;
     string anrkey?; // TODO Integer
     string gruppenliste?; // TODO with ", "
     string beigrulist?; // TODO with "/"
 
+    string idxtel1?;
     string idxtel2?;
     string idxtel3?;
+    string idxtel4?;
 
     string sscnt?; // TODO?
     json[] mggruar?;
+
     string zfld01?;
+    string zfld02?;
+    string zfld03?;
+    string zfld04?;
+    string zfld05?;
+    string zfld06?;
+    string zfld07?;
+    string zfld08?;
+    string zfld09?;
+    string zfld10?;
+    string zfld11?;
+    string zfld12?;
+    string zfld13?;
+    string zfld14?;
+    string zfld15?;
+    string zfld16?;
 |};
 
