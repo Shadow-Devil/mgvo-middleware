@@ -38,7 +38,7 @@ type Member record {|
     string anrede; // TODO Int 0-84
     string anrzus?;
     "m"|"w"|"d"|"s" geschlecht?;
-    string etianr?; // TODO Enum (hf|f|s|t|el|n)
+    "hf"|"f"|"s"|"t"|"el"|"n" etianr?;
     string gebdat?; // TODO Date
     string alter?; // TODO Integer
     string vorname?;

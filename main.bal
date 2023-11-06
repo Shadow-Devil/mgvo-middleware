@@ -1,15 +1,13 @@
 import ballerina/http;
+import ballerina/http.httpscerr;
 import ballerina/mime;
-import ballerina/crypto;
 import ballerina/constraint;
-import ballerina/url;
 
-type MgvoMiddlewareResponse MgvoResponse|http:Unauthorized|error;
-
-// TODO: change up once 7.1 is released (https://github.com/ballerina-platform/openapi-tools/releases)
-//httpscerr:UnauthorizedError|
-//httpscerr:NotImplementedError|
-//http:ClientError;
+type MgvoMiddlewareResponse MgvoResponse|
+    http:ClientError|
+    httpscerr:BadRequestError|
+    httpscerr:UnauthorizedError|
+    httpscerr:InternalServerErrorError;
 
 @constraint:Int {
     minValue: 0,
@@ -98,7 +96,7 @@ service / on new http:Listener(8080,
             string? mailRecipient,
             string? domestic,
             DunningLevel? dunningLevel
-    ) returns MgvoMiddlewareResponse|error|Member[] {
+    ) returns MgvoMiddlewareResponse|Member[] {
         map<anydata> params = {
             suchbeg: search,
             suchalterv: birthdateFrom,
@@ -119,11 +117,12 @@ service / on new http:Listener(8080,
         };
 
         var result = check self.forward(GET_MEMBERS, call\-id, crypt\-key, params.filter(v => v !is null));
-        if result is MgvoResponse {
-            Member[] r = check result[result.objname].cloneWithType();
-            return r;
+
+        Member[]|error r = result[result.objname].cloneWithType();
+        if r is error {
+            return error httpscerr:InternalServerErrorError(r.toString(), r);
         }
-        return result;
+        return r;
     }
 
     resource function get members/[int id](@http:Header string call\-id, @http:Header string crypt\-key) returns MgvoMiddlewareResponse|error {
@@ -175,7 +174,7 @@ service / on new http:Listener(8080,
             string call\-id,
             string? crypt\-key = null,
             map<anydata>? queryParams = null
-    ) returns MgvoMiddlewareResponse|url:Error|crypto:Error {
+    ) returns MgvoMiddlewareResponse {
         final http:Response result;
         if queryParams is null || crypt\-key is null {
             result = check self.mgvoClient->/(
@@ -185,7 +184,10 @@ service / on new http:Listener(8080,
                 version = 3.0
             );
         } else {
-            var encrypted = check encrypt(call\-id, crypt\-key, queryParams);
+            var encrypted = encrypt(call\-id, crypt\-key, queryParams);
+            if encrypted is error {
+                return error httpscerr:BadRequestError(encrypted.toString(), encrypted);
+            }
             result = check self.mgvoClient->/(
                 call_id = call\-id,
                 reqtype = requestType,
@@ -196,28 +198,32 @@ service / on new http:Listener(8080,
         }
 
         //io:println(result.getTextPayload());
-        //io:println(result.statusCode.toString());
-        var mimetype = mime:getMediaType(result.getContentType());
-        //io:println(mimetype);
+        final var mimetype = mime:getMediaType(result.getContentType());
 
         if mimetype is mime:MediaType && mimetype.getBaseType() == "text/html" {
-            var payload = check result.getTextPayload();
+            final var payload = check result.getTextPayload();
             if payload.includes("Fehler: Sicherheitsverstoß!") {
-                //return error httpscerr:UnauthorizedError(string `Header "call-id" = "${call\-id}" is invalid`);
-                return http:UNAUTHORIZED;
+                return error httpscerr:UnauthorizedError(string `Header "call-id" = "${call\-id}" is invalid`);
             }
             if payload.includes("Nicht erlaubt!") {
-                return http:UNAUTHORIZED;
+                return error httpscerr:UnauthorizedError(string `Header "call-id" = "${call\-id}" is invalid`);
             }
             if payload.includes("ERROR") {
-                return error(payload);
+                return error httpscerr:InternalServerErrorError(payload);
             }
-            return error(payload);
+            return error httpscerr:InternalServerErrorError(payload);
         }
 
         if (result.statusCode != 200) {
             panic error(string `${result.statusCode}, ${check result.getTextPayload()}`);
         }
-        return (check result.getJsonPayload()).cloneWithType(MgvoResponse);
+        final var jsonpayload = check (result.getJsonPayload());
+        final var response = jsonpayload.cloneWithType(MgvoResponse);
+        if response is error {
+            
+            return error httpscerr:InternalServerErrorError(response.toString(), response);
+        } else {
+            return response;
+        }
     }
 }
